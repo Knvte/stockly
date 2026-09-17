@@ -58,17 +58,32 @@ authForm.addEventListener("submit", async (event) => {
         return;
     }
     const data = Object.fromEntries(new FormData(authForm).entries());
+    data.email = data.email.trim().toLowerCase();
     authSubmit.disabled = true;
+    authSubmit.setAttribute("aria-busy", "true");
     setAuthMessage("Connexion en cours...", false);
-    const result = isSignUp
-        ? await authClient.auth.signUp({ email: data.email, password: data.password })
-        : await authClient.auth.signInWithPassword({ email: data.email, password: data.password });
+    let result;
+    try {
+        result = isSignUp
+            ? await authClient.auth.signUp({ email: data.email, password: data.password })
+            : await authClient.auth.signInWithPassword({ email: data.email, password: data.password });
+    } catch {
+        authSubmit.disabled = false;
+        authSubmit.removeAttribute("aria-busy");
+        setAuthMessage("Connexion impossible. Vérifiez votre connexion internet et réessayez.");
+        return;
+    }
     authSubmit.disabled = false;
+    authSubmit.removeAttribute("aria-busy");
     if (result.error) {
         const errorText = result.error.message.toLowerCase();
-        const friendlyMessage = errorText.includes("rate limit") || errorText.includes("email rate")
+        const friendlyMessage = errorText.includes("invalid login credentials")
+            ? "Adresse e-mail ou mot de passe incorrect."
+            : errorText.includes("email not confirmed")
+                ? "Votre adresse e-mail n'est pas encore confirmée."
+                : errorText.includes("rate limit") || errorText.includes("email rate")
             ? "La limite d'e-mails Supabase est atteinte. Réessayez plus tard ou configurez un serveur SMTP personnalisé dans Supabase."
-            : result.error.message;
+            : result.error.message || "Une erreur de connexion est survenue.";
         setAuthMessage(friendlyMessage);
         return;
     }
