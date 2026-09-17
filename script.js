@@ -65,7 +65,11 @@ authForm.addEventListener("submit", async (event) => {
         : await authClient.auth.signInWithPassword({ email: data.email, password: data.password });
     authSubmit.disabled = false;
     if (result.error) {
-        setAuthMessage(result.error.message);
+        const errorText = result.error.message.toLowerCase();
+        const friendlyMessage = errorText.includes("rate limit") || errorText.includes("email rate")
+            ? "La limite d'e-mails Supabase est atteinte. Réessayez plus tard ou configurez un serveur SMTP personnalisé dans Supabase."
+            : result.error.message;
+        setAuthMessage(friendlyMessage);
         return;
     }
     if (isSignUp && !result.data.session) {
@@ -135,9 +139,30 @@ function render() {
     $("#total-products").textContent = currencyFormatter.format(products.length);
     $("#stock-value").textContent = `${currencyFormatter.format(products.reduce((sum, product) => sum + product.price * product.stock, 0))} FCFA`;
     $("#low-stock-count").textContent = products.filter((product) => product.stock <= product.threshold).length;
+    $("#pending-orders").textContent = "0";
     $(".nav-item[href='#products'] b").textContent = products.length;
     applyFilters();
     renderMovementOptions();
+    renderActivity();
+}
+
+function renderActivity() {
+    const activityList = $("#activity-list");
+    if (!movements.length) {
+        activityList.innerHTML = '<div class="empty-activity">Aucune activité pour le moment.</div>';
+        return;
+    }
+    activityList.innerHTML = movements.slice(0, 4).map((movement) => {
+        const isEntry = movement.label === "Entrée de stock";
+        const isExit = movement.label === "Sortie de stock";
+        const iconClass = isEntry ? "received" : isExit ? "shipped" : "added";
+        const icon = isEntry ? "↓" : isExit ? "↑" : "＋";
+        const amountClass = isEntry ? "plus" : isExit ? "minus" : "neutral";
+        const date = new Date(movement.date);
+        const elapsedMinutes = Math.max(1, Math.floor((Date.now() - date.getTime()) / 60000));
+        const elapsed = elapsedMinutes < 60 ? `Il y a ${elapsedMinutes} min` : `Il y a ${Math.floor(elapsedMinutes / 60)} h`;
+        return `<div class="activity"><span class="activity-icon ${iconClass}">${icon}</span><div><strong>${escapeHtml(movement.label)}</strong><p>${escapeHtml(movement.detail)}</p><small>${elapsed}</small></div><span class="amount ${amountClass}">${escapeHtml(movement.amount)}</span></div>`;
+    }).join("");
 }
 
 function applyFilters() {

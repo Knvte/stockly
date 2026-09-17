@@ -89,7 +89,7 @@
                 </article>
                 <article class="stat-card">
                     <div class="stat-icon green">✓</div>
-                    <div><span class="stat-label">Commandes en cours</span><strong>32</strong><small class="positive">↗ 4,6% <em>vs mois dernier</em></small></div>
+                    <div><span class="stat-label">Commandes en cours</span><strong id="pending-orders">0</strong><small class="neutral">Aucune commande enregistrée</small></div>
                     <span class="stat-menu">•••</span>
                 </article>
             </section>
@@ -104,12 +104,7 @@
                 </article>
                 <article class="panel activity-panel">
                     <div class="panel-heading"><div><h2>Activité récente</h2><p>Les dernières actions effectuées</p></div><a href="#movements">Voir tout</a></div>
-                    <div class="activity-list">
-                        <div class="activity"><span class="activity-icon received">↓</span><div><strong>Réception de marchandise</strong><p>Commande <b>#CMD-00842</b></p><small>Il y a 12 min</small></div><span class="amount plus">+ 120</span></div>
-                        <div class="activity"><span class="activity-icon shipped">↑</span><div><strong>Sortie de stock</strong><p>Commande <b>#CMD-00839</b></p><small>Il y a 45 min</small></div><span class="amount minus">− 24</span></div>
-                        <div class="activity"><span class="activity-icon added">＋</span><div><strong>Nouveau produit ajouté</strong><p>Casque audio Pro X</p><small>Il y a 2 h</small></div><span class="amount neutral">—</span></div>
-                        <div class="activity"><span class="activity-icon alert">!</span><div><strong>Seuil de stock atteint</strong><p>Câble USB-C 2m</p><small>Il y a 3 h</small></div><span class="amount neutral">—</span></div>
-                    </div>
+                    <div class="activity-list" id="activity-list"><div class="empty-activity">Aucune activité pour le moment.</div></div>
                 </article>
             </section>
 
