@@ -5,8 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stockly — Gestion de stock</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+    <section class="auth-screen" id="auth-screen" aria-labelledby="auth-title">
+        <div class="auth-card">
+            <div class="brand auth-brand"><div class="brand-mark">S</div><div><strong>stockly</strong><span>Gestion simple</span></div></div>
+            <h1 id="auth-title">Bienvenue sur Stockly</h1>
+            <p class="auth-intro">Connectez-vous pour gérer votre inventaire.</p>
+            <form id="auth-form">
+                <label>Adresse e-mail<input name="email" type="email" autocomplete="email" required placeholder="vous@exemple.com"></label>
+                <label>Mot de passe<input name="password" type="password" autocomplete="current-password" minlength="6" required placeholder="6 caractères minimum"></label>
+                <button class="primary-button auth-submit" type="submit" id="auth-submit">Se connecter</button>
+            </form>
+            <button class="auth-switch" id="auth-switch" type="button">Créer un compte</button>
+            <p class="auth-message" id="auth-message" role="alert"></p>
+        </div>
+    </section>
     <div class="app-shell">
         <aside class="sidebar">
             <div class="brand">
@@ -44,8 +59,9 @@
                 <div class="top-actions">
                     <button class="icon-button notification" aria-label="Notifications"><span>♧</span><i></i></button>
                     <button class="icon-button" id="theme-toggle" aria-label="Activer le mode sombre">☾</button>
-                    <div class="top-avatar">KM</div>
-                    <span class="top-name">Kante M.</span>
+                    <div class="top-avatar" id="user-avatar">KM</div>
+                    <span class="top-name" id="user-email">Utilisateur</span>
+                    <button class="logout-button" id="logout-button" type="button">Déconnexion</button>
                     <button class="chevron" aria-label="Ouvrir le menu">⌄</button>
                 </div>
             </header>

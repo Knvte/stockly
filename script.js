@@ -1,4 +1,13 @@
 const $ = (selector) => document.querySelector(selector);
+const SUPABASE_URL = "https://ngpvqqcgizpzjmrxkeaw.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_XLYJMhAlLgA6R74oawkL4A_qJkTVOHr";
+const authClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+const authScreen = $("#auth-screen");
+const authForm = $("#auth-form");
+const authSwitch = $("#auth-switch");
+const authSubmit = $("#auth-submit");
+const authMessage = $("#auth-message");
+let isSignUp = false;
 const productModal = $("#product-modal");
 const movementModal = $("#movement-modal");
 const productForm = $("#product-form");
@@ -9,6 +18,59 @@ const categoryFilter = $("#category-filter");
 const currencyFormatter = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 });
 const storageKey = "stockly-products-v2";
 const movementKey = "stockly-movements-v2";
+
+function setAuthMessage(message = "", isError = true) {
+    authMessage.textContent = message;
+    authMessage.style.color = isError ? "" : "#20b87a";
+}
+
+function updateUserInterface(session) {
+    authScreen.classList.toggle("hidden", Boolean(session));
+    if (!session) return;
+    const email = session.user.email || "Utilisateur";
+    $("#user-email").textContent = email;
+    $("#user-avatar").textContent = email.slice(0, 2).toUpperCase();
+}
+
+authSwitch.addEventListener("click", () => {
+    isSignUp = !isSignUp;
+    authSubmit.textContent = isSignUp ? "Créer mon compte" : "Se connecter";
+    authSwitch.textContent = isSignUp ? "J'ai déjà un compte" : "Créer un compte";
+    $("#auth-title").textContent = isSignUp ? "Créer votre compte" : "Bienvenue sur Stockly";
+    $(".auth-intro").textContent = isSignUp ? "Inscrivez-vous pour commencer à gérer votre stock." : "Connectez-vous pour gérer votre inventaire.";
+    setAuthMessage("");
+});
+
+authForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!authClient) {
+        setAuthMessage("Le service d'authentification est indisponible.");
+        return;
+    }
+    const data = Object.fromEntries(new FormData(authForm).entries());
+    authSubmit.disabled = true;
+    setAuthMessage("Connexion en cours...", false);
+    const result = isSignUp
+        ? await authClient.auth.signUp({ email: data.email, password: data.password })
+        : await authClient.auth.signInWithPassword({ email: data.email, password: data.password });
+    authSubmit.disabled = false;
+    if (result.error) {
+        setAuthMessage(result.error.message);
+        return;
+    }
+    if (isSignUp && !result.data.session) {
+        setAuthMessage("Compte créé. Vérifiez votre e-mail pour confirmer votre adresse.", false);
+        return;
+    }
+    authForm.reset();
+    setAuthMessage("");
+});
+
+$("#logout-button").addEventListener("click", async () => {
+    if (!authClient) return;
+    const { error } = await authClient.auth.signOut();
+    if (error) showToast("Impossible de se déconnecter.", "error");
+});
 
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (character) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
@@ -188,5 +250,18 @@ document.querySelectorAll(".nav-item").forEach((item) => item.addEventListener("
     document.querySelectorAll(".nav-item").forEach((nav) => nav.classList.remove("active"));
     item.classList.add("active");
 }));
+
+if (authClient) {
+    authClient.auth.onAuthStateChange((_event, session) => updateUserInterface(session));
+    authClient.auth.getSession().then(({ data, error }) => {
+        if (error) {
+            setAuthMessage("Impossible de vérifier la session.");
+            return;
+        }
+        updateUserInterface(data.session);
+    });
+} else {
+    setAuthMessage("Le service d'authentification est indisponible.");
+}
 
 render();
