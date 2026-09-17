@@ -16,8 +16,10 @@ const productList = $("#product-list");
 const searchInput = $("#search-input");
 const categoryFilter = $("#category-filter");
 const currencyFormatter = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 });
-const storageKey = "stockly-products-v2";
-const movementKey = "stockly-movements-v2";
+const storageKeyPrefix = "stockly-products-v3-";
+const movementKeyPrefix = "stockly-movements-v3-";
+let storageKey = "";
+let movementKey = "";
 
 function setAuthMessage(message = "", isError = true) {
     authMessage.textContent = message;
@@ -26,10 +28,18 @@ function setAuthMessage(message = "", isError = true) {
 
 function updateUserInterface(session) {
     authScreen.classList.toggle("hidden", Boolean(session));
-    if (!session) return;
+    if (!session) {
+        storageKey = "";
+        movementKey = "";
+        products = [];
+        movements = [];
+        render();
+        return;
+    }
     const email = session.user.email || "Utilisateur";
     $("#user-email").textContent = email;
     $("#user-avatar").textContent = email.slice(0, 2).toUpperCase();
+    loadUserData(session.user.id);
 }
 
 authSwitch.addEventListener("click", () => {
@@ -82,24 +92,22 @@ const escapeCsvCell = (value) => {
 };
 
 function readInitialProducts() {
-    return [...productList.rows].map((row, index) => {
-        const cells = row.cells;
-        return {
-            id: `seed-${index + 1}`,
-            name: cells[0].querySelector("strong").textContent.trim(),
-            sku: cells[1].innerText.trim(),
-            category: cells[2].innerText.trim(),
-            price: Number(cells[3].innerText.replace(/[^\d]/g, "")),
-            stock: Number(cells[4].innerText.replace(/[^\d]/g, "")),
-            threshold: 10
-        };
-    });
+    return [];
 }
 
-let products = JSON.parse(localStorage.getItem(storageKey) || "null") || readInitialProducts();
-let movements = JSON.parse(localStorage.getItem(movementKey) || "[]");
+let products = [];
+let movements = [];
+
+function loadUserData(userId) {
+    storageKey = `${storageKeyPrefix}${userId}`;
+    movementKey = `${movementKeyPrefix}${userId}`;
+    products = JSON.parse(localStorage.getItem(storageKey) || "null") || readInitialProducts();
+    movements = JSON.parse(localStorage.getItem(movementKey) || "[]");
+    render();
+}
 
 function save() {
+    if (!storageKey) return;
     localStorage.setItem(storageKey, JSON.stringify(products));
     localStorage.setItem(movementKey, JSON.stringify(movements.slice(0, 20)));
 }
